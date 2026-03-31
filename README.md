@@ -28,21 +28,16 @@ You add 3 function calls to your agent. RunLens records every step, stores it, a
 
 ## Quickstart
 
-### 1. Start the API
+### 1. Install the SDK
 
 ```bash
-git clone https://github.com/mda-diaz/runlens.git
-cd runlens/apps/api
-pip install -r requirements.txt
-uvicorn main:app --reload
+pip install runlens-sdk
 ```
-
-API runs at `http://localhost:8000`.
 
 ### 2. Instrument your agent
 
 ```python
-from packages.sdk_python.runlens.sdk import start_run, record_step, end_run
+from runlens import start_run, record_step, end_run
 
 # Start a run — capture your execution context
 run = start_run(
@@ -53,7 +48,7 @@ run = start_run(
         "tools": ["search", "calculator"],
         "temperature": 0.7,
     },
-    api_url="http://localhost:8000",
+    api_url="https://runlens-api.onrender.com",
 )
 
 # Record each step
@@ -73,7 +68,7 @@ end_run(run.id)
 
 ### 3. Open the UI
 
-Open `apps/web/index.html` in your browser. Select two runs and click **Compare**.
+Go to [runlens-api.onrender.com](https://runlens-api.onrender.com). Select two runs and click **Compare**.
 
 ---
 
@@ -99,11 +94,11 @@ When you compare two runs, RunLens shows:
 See a concrete example: a support bot running the same task twice — once over-engineered, once lean. 5x cost difference, same output.
 
 ```bash
-pip install requests
-python examples/demo_agent.py
+pip install runlens-sdk requests
+RUNLENS_API=https://runlens-api.onrender.com python examples/demo_agent.py
 ```
 
-Then open `apps/web/index.html`, select both runs, and click Compare.
+Then go to [runlens-api.onrender.com](https://runlens-api.onrender.com), select both runs, and click Compare.
 
 ---
 
@@ -153,7 +148,6 @@ Ends the run and returns the complete run record.
 The API is a standard FastAPI app. Deploy anywhere that runs Python:
 
 ```bash
-# Render, Railway, Fly.io, etc.
 uvicorn main:app --host 0.0.0.0 --port $PORT
 ```
 
