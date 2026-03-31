@@ -38,7 +38,7 @@ record_step(
     name="answer question",
     input={"prompt": prompt},
     output={"answer": answer},
-    cost=usage.total_tokens * 0.000005,
+    model="gpt-4o",           # cost is calculated automatically
     tokens=usage.total_tokens,
 )
 
