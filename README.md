@@ -33,6 +33,36 @@ Phase 1 focuses on:
 - `docs` — product definition and design docs
 - `examples` — sample agents and runs
 
+## Quickstart
+
+```bash
+pip install runlens-sdk
+```
+
+```python
+from runlens import start_run, record_step, end_run
+
+run = start_run(
+    task="answer_question",
+    context={"model": "gpt-4o", "prompt_version": "v1"},
+    api_url="https://runlens-api.onrender.com",
+)
+
+record_step(
+    run_id=run.id,
+    step_type="llm_call",
+    name="answer question",
+    input={"prompt": "What is the capital of France?"},
+    output={"answer": "Paris"},
+    cost=0.000125,
+    tokens=25,
+)
+
+end_run(run.id)
+```
+
+Open [RunLens](https://runlens-api.onrender.com) to inspect the run and compare it against others.
+
 ## Vision
 Most tools show what happened.
 RunLens shows what changed and how to improve it.
