@@ -6,6 +6,24 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+MODEL_COSTS: Dict[str, float] = {
+    "gpt-4o":            0.000005,
+    "gpt-4o-mini":       0.0000006,
+    "gpt-4-turbo":       0.00001,
+    "gpt-3.5-turbo":     0.0000005,
+    "claude-3-5-sonnet": 0.000003,
+    "claude-3-5-haiku":  0.0000008,
+    "claude-3-opus":     0.000015,
+}
+
+
+def calculate_cost(model: str, tokens: int) -> float:
+    """Return cost in USD for the given model and token count."""
+    if model not in MODEL_COSTS:
+        print(f"RunLens: model {model} not in pricing table. Pass cost= explicitly or use calculate_cost()")
+        return 0.0
+    return tokens * MODEL_COSTS[model]
+
 
 @dataclass
 class RunHandle:
@@ -72,6 +90,7 @@ def record_step(
     tokens: int = 0,
     name: Optional[str] = None,
     duration_ms: Optional[int] = None,
+    model: Optional[str] = None,
 ) -> None:
     """Record a single step within a run.
 
@@ -87,6 +106,9 @@ def record_step(
     """
     if run_id not in _active_runs:
         raise ValueError(f"Run '{run_id}' not found. Call start_run() first.")
+
+    if model is not None and cost == 0.0:
+        cost = calculate_cost(model, tokens)
 
     steps = _steps[run_id]
     step = {
