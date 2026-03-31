@@ -10,9 +10,9 @@ RunLens helps you understand why an agent run failed or became expensive — and
 
 ## The problem
 
-When an agent fails or costs too much, existing tools show you *what happened* — logs, traces, token counts. But they don't tell you *what changed* between runs or *which decision caused the issue*.
+When an agent fails or costs too much, existing tools show you what happened — logs, traces, token counts. But they don't tell you why this run was different from the one that worked yesterday, or which specific decision made it 3x more expensive.
 
-RunLens adds a comparison layer: you instrument your agent with 3 functions, run it twice with different configs, and see exactly what was different — model, prompt version, tools, temperature — alongside the cost and step diff.
+RunLens captures a full snapshot of every run — model, prompt version, tools, config — and lets you compare any two runs side by side. You see exactly what changed and where the cost went.
 
 ---
 
