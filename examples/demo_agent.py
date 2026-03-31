@@ -4,11 +4,10 @@ RunLens Demo — The Case of the Expensive Agent
 A support bot that answers customer questions.
 Two versions of the same agent. Same task. Very different behavior.
 
-Run this script, then open apps/web/index.html to see the comparison.
+Run this script, then go to runlens-api.onrender.com to see the comparison.
 
 Requirements:
-    pip install requests
-    (RunLens API running at http://localhost:8000)
+    pip install runlens-sdk requests
 """
 
 import os
