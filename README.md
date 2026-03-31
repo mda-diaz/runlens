@@ -130,7 +130,7 @@ Starts a new run. Returns a `RunHandle` with an `.id`.
 - `api_url` — RunLens API base URL (optional, streams data to API)
 - `storage_path` — local JSON file path (optional, saves data locally)
 
-### `record_step(run_id, step_type, input, output, cost, tokens=0, name=None, duration_ms=None)`
+### `record_step(run_id, step_type, input, output, cost=0.0, tokens=0, model=None, name=None, duration_ms=None)`
 
 Records a single step within a run.
 
