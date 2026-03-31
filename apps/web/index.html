@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RunLens</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #fff;
+      color: #111;
+      font-size: 14px;
+    }
+
+    header {
+      padding: 20px 32px;
+      border-bottom: 1px solid #e5e5e5;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    header h1 { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
+    header span { color: #999; font-size: 13px; }
+
+    main { padding: 32px; max-width: 1100px; }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      min-height: 36px;
+    }
+    .toolbar h2 { font-size: 15px; font-weight: 600; color: #444; }
+
+    #compare-btn {
+      display: none;
+      padding: 8px 18px;
+      background: #111;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    #compare-btn:hover { background: #333; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    thead th {
+      text-align: left;
+      padding: 10px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid #e5e5e5;
+    }
+    thead th:first-child { width: 36px; }
+
+    tbody tr {
+      border-bottom: 1px solid #f0f0f0;
+      transition: background 0.1s;
+    }
+    tbody tr:hover { background: #fafafa; }
+    tbody tr.selected { background: #f5f5f5; }
+
+    td { padding: 12px 12px; vertical-align: middle; }
+
+    .task-name { font-weight: 500; }
+    .task-name a { color: inherit; text-decoration: none; }
+    .task-name a:hover { text-decoration: underline; }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 100px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .badge-running  { background: #fff3cd; color: #856404; }
+    .badge-completed { background: #d1fae5; color: #065f46; }
+    .badge-failed   { background: #fee2e2; color: #991b1b; }
+
+    .cost { font-variant-numeric: tabular-nums; }
+    .mono { font-family: "SF Mono", "Fira Code", monospace; font-size: 12px; color: #555; }
+
+    .btn-view {
+      padding: 5px 12px;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 12px;
+      cursor: pointer;
+      color: #333;
+      text-decoration: none;
+    }
+    .btn-view:hover { border-color: #999; }
+
+    .empty {
+      padding: 60px 0;
+      text-align: center;
+      color: #aaa;
+      font-size: 14px;
+    }
+
+    .error-msg {
+      color: #c00;
+      padding: 16px;
+      background: #fff5f5;
+      border: 1px solid #fcc;
+      border-radius: 6px;
+      margin-top: 16px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>RunLens</h1>
+  <span>Agent run inspector</span>
+</header>
+
+<main>
+  <div class="toolbar">
+    <h2>Runs</h2>
+    <button id="compare-btn" onclick="goCompare()">Compare selected</button>
+  </div>
+
+  <div id="content">
+    <div class="empty">Loading…</div>
+  </div>
+</main>
+
+<script>
+  const API = 'http://localhost:8000';
+  let selected = [];
+
+  async function load() {
+    const el = document.getElementById('content');
+    try {
+      const res = await fetch(`${API}/runs`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const runs = await res.json();
+
+      if (runs.length === 0) {
+        el.innerHTML = '<div class="empty">No runs yet. Send your first run via the SDK.</div>';
+        return;
+      }
+
+      el.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th></th>
+              <th>Task</th>
+              <th>Status</th>
+              <th>Cost</th>
+              <th>Tokens</th>
+              <th>Duration</th>
+              <th>Date</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      `;
+
+      const tbody = document.getElementById('tbody');
+      runs.forEach(run => {
+        const tr = document.createElement('tr');
+        tr.dataset.id = run.id;
+        tr.innerHTML = `
+          <td><input type="checkbox" data-id="${run.id}" onchange="toggleSelect(this)" /></td>
+          <td class="task-name"><a href="run.html?id=${run.id}">${esc(run.task_name)}</a></td>
+          <td><span class="badge badge-${run.status}">${run.status}</span></td>
+          <td class="cost mono">$${run.total_cost.toFixed(4)}</td>
+          <td class="mono">${run.total_tokens.toLocaleString()}</td>
+          <td class="mono">${fmtDuration(run.duration_ms)}</td>
+          <td class="mono">${fmtDate(run.created_at)}</td>
+          <td><a class="btn-view" href="run.html?id=${run.id}">View</a></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    } catch (e) {
+      el.innerHTML = `<div class="error-msg">Could not connect to API at ${API}. Make sure the backend is running.<br><small>${e.message}</small></div>`;
+    }
+  }
+
+  function toggleSelect(cb) {
+    const id = cb.dataset.id;
+    const tr = cb.closest('tr');
+    if (cb.checked) {
+      if (selected.length === 2) {
+        // deselect the oldest
+        const old = selected.shift();
+        const oldCb = document.querySelector(`input[data-id="${old}"]`);
+        if (oldCb) { oldCb.checked = false; oldCb.closest('tr').classList.remove('selected'); }
+      }
+      selected.push(id);
+      tr.classList.add('selected');
+    } else {
+      selected = selected.filter(s => s !== id);
+      tr.classList.remove('selected');
+    }
+    document.getElementById('compare-btn').style.display = selected.length === 2 ? 'block' : 'none';
+  }
+
+  function goCompare() {
+    if (selected.length !== 2) return;
+    window.location.href = `compare.html?run_a=${selected[0]}&run_b=${selected[1]}`;
+  }
+
+  function fmtDuration(ms) {
+    if (ms == null) return '—';
+    if (ms < 1000) return `${ms}ms`;
+    return `${(ms / 1000).toFixed(1)}s`;
+  }
+
+  function fmtDate(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    return d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  }
+
+  function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  load();
+</script>
+</body>
+</html>
