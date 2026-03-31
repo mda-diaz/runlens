@@ -21,7 +21,7 @@ run = start_run(
         "prompt_version": "v1",
         "temperature": 0.7,
     },
-    api_url="https://your-runlens-api.com",
+    api_url="https://runlens-api.onrender.com",
 )
 
 prompt = "What is the capital of France?"
