@@ -51,14 +51,15 @@ run = start_run(
     api_url="https://runlens-api.onrender.com",
 )
 
-# Record each step
+# Record each step — cost is calculated automatically for known models,
+# or pass cost= explicitly for custom models.
 record_step(
     run_id=run.id,
     step_type="llm_call",
     name="classify intent",
     input={"prompt": "..."},
     output={"intent": "refund_request"},
-    cost=0.002,
+    model="gpt-4o",
     tokens=150,
 )
 
