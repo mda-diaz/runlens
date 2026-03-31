@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Run detail — RunLens</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #fff;
+      color: #111;
+      font-size: 14px;
+    }
+
+    header {
+      padding: 20px 32px;
+      border-bottom: 1px solid #e5e5e5;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    header a { color: #888; text-decoration: none; font-size: 13px; }
+    header a:hover { color: #111; }
+    header .sep { color: #ddd; }
+    header h1 { font-size: 16px; font-weight: 600; }
+
+    main { padding: 32px; max-width: 860px; }
+
+    /* Meta row */
+    .meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 100px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .badge-running   { background: #fff3cd; color: #856404; }
+    .badge-completed { background: #d1fae5; color: #065f46; }
+    .badge-failed    { background: #fee2e2; color: #991b1b; }
+
+    .stat { color: #555; font-size: 13px; }
+    .stat strong { color: #111; font-weight: 600; }
+    .dot { color: #ddd; }
+
+    /* Context pills */
+    .section-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #aaa;
+      margin-bottom: 10px;
+    }
+
+    .context-section { margin-bottom: 32px; }
+
+    .pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      background: #f5f5f5;
+      border-radius: 100px;
+      font-size: 12px;
+    }
+    .pill-key { color: #888; }
+    .pill-val { color: #111; font-weight: 500; font-family: "SF Mono", "Fira Code", monospace; }
+
+    /* Timeline */
+    .timeline { position: relative; padding-left: 32px; }
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 11px;
+      top: 8px;
+      bottom: 8px;
+      width: 2px;
+      background: #e5e5e5;
+    }
+
+    .step {
+      position: relative;
+      margin-bottom: 20px;
+    }
+    .step-dot {
+      position: absolute;
+      left: -26px;
+      top: 10px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #d0d0d0;
+      border: 2px solid #fff;
+      box-shadow: 0 0 0 2px #d0d0d0;
+    }
+    .step.expensive .step-dot {
+      background: #ef4444;
+      box-shadow: 0 0 0 2px #ef4444;
+    }
+
+    .step-card {
+      border: 1px solid #e5e5e5;
+      border-radius: 8px;
+      padding: 14px 16px;
+    }
+    .step.expensive .step-card {
+      border-color: #fca5a5;
+      background: #fff5f5;
+    }
+
+    .step-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .step-num { font-size: 11px; color: #aaa; font-weight: 600; min-width: 20px; }
+    .step-name { font-weight: 600; font-size: 14px; flex: 1; }
+    .type-badge {
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 500;
+      background: #f0f0f0;
+      color: #555;
+      font-family: "SF Mono", "Fira Code", monospace;
+    }
+    .step.expensive .type-badge { background: #fee2e2; color: #991b1b; }
+
+    .step-stats {
+      display: flex;
+      gap: 16px;
+      font-size: 12px;
+      color: #888;
+    }
+    .step-stats span strong { color: #111; }
+    .expensive-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #ef4444;
+      margin-left: auto;
+    }
+
+    .no-context { color: #bbb; font-style: italic; font-size: 13px; }
+
+    .empty { padding: 60px 0; text-align: center; color: #aaa; }
+    .error-msg {
+      color: #c00; padding: 16px; background: #fff5f5;
+      border: 1px solid #fcc; border-radius: 6px;
+    }
+
+    .mono { font-family: "SF Mono", "Fira Code", monospace; font-size: 12px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <a href="index.html">← Runs</a>
+  <span class="sep">/</span>
+  <h1 id="header-title">Loading…</h1>
+</header>
+
+<main id="main">
+  <div class="empty">Loading…</div>
+</main>
+
+<script>
+  const API = window.location.origin;
+  const params = new URLSearchParams(location.search);
+  const runId = params.get('id');
+
+  async function load() {
+    const main = document.getElementById('main');
+    if (!runId) { main.innerHTML = '<div class="error-msg">No run ID specified.</div>'; return; }
+
+    try {
+      const res = await fetch(`${API}/runs/${runId}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const run = await res.json();
+
+      document.getElementById('header-title').textContent = run.task_name;
+      document.title = `${run.task_name} — RunLens`;
+
+      const maxCost = Math.max(...(run.steps || []).map(s => s.cost ?? 0), 0);
+
+      const contextEntries = Object.entries(run.context || {});
+      const pillsHtml = contextEntries.length
+        ? contextEntries.map(([k, v]) =>
+            `<span class="pill"><span class="pill-key">${esc(k)}</span><span class="pill-val">${esc(JSON.stringify(v))}</span></span>`
+          ).join('')
+        : '<span class="no-context">No context recorded</span>';
+
+      const stepsHtml = (run.steps || []).length === 0
+        ? '<div class="empty">No steps recorded.</div>'
+        : `<div class="timeline">${(run.steps || []).map(step => {
+            const expensive = maxCost > 0 && step.cost === maxCost;
+            return `
+              <div class="step${expensive ? ' expensive' : ''}">
+                <div class="step-dot"></div>
+                <div class="step-card">
+                  <div class="step-header">
+                    <span class="step-num">#${step.sequence}</span>
+                    <span class="step-name">${esc(step.name)}</span>
+                    <span class="type-badge">${esc(step.step_type)}</span>
+                    ${expensive ? '<span class="expensive-label">Most expensive</span>' : ''}
+                  </div>
+                  <div class="step-stats">
+                    <span>Cost: <strong>$${(step.cost ?? 0).toFixed(4)}</strong></span>
+                    <span>Tokens: <strong>${(step.tokens ?? 0).toLocaleString()}</strong></span>
+                    ${step.duration_ms != null ? `<span>Duration: <strong>${fmtDuration(step.duration_ms)}</strong></span>` : ''}
+                  </div>
+                </div>
+              </div>`;
+          }).join('')}</div>`;
+
+      main.innerHTML = `
+        <div class="meta">
+          <span class="badge badge-${run.status}">${run.status}</span>
+          <span class="dot">·</span>
+          <span class="stat">Cost: <strong>$${run.total_cost.toFixed(4)}</strong></span>
+          <span class="dot">·</span>
+          <span class="stat">Tokens: <strong>${run.total_tokens.toLocaleString()}</strong></span>
+          <span class="dot">·</span>
+          <span class="stat">Duration: <strong>${fmtDuration(run.duration_ms)}</strong></span>
+          <span class="dot">·</span>
+          <span class="stat mono" style="font-size:11px;color:#bbb">${run.id.slice(0,8)}</span>
+        </div>
+
+        <div class="context-section">
+          <div class="section-label">Context</div>
+          <div class="pills">${pillsHtml}</div>
+        </div>
+
+        <div class="section-label">Steps (${(run.steps || []).length})</div>
+        ${stepsHtml}
+      `;
+    } catch (e) {
+      main.innerHTML = `<div class="error-msg">Failed to load run.<br><small>${e.message}</small></div>`;
+    }
+  }
+
+  function fmtDuration(ms) {
+    if (ms == null) return '—';
+    if (ms < 1000) return `${ms}ms`;
+    return `${(ms / 1000).toFixed(1)}s`;
+  }
+
+  function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  load();
+</script>
+</body>
+</html>
