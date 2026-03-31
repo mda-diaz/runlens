@@ -1,5 +1,8 @@
 from fastapi import FastAPI
 from database import create_db_and_tables
+from routes.runs import router as runs_router
+
+app.include_router(runs_router)
 
 app = FastAPI()
 
@@ -10,3 +13,7 @@ def on_startup():
 @app.get("/")
 def read_root():
     return {"message": "RunLens API running"}
+
+
+
+
