@@ -11,11 +11,12 @@ Requirements:
     (RunLens API running at http://localhost:8000)
 """
 
+import os
 import sys
 import time
 import requests
 
-API = "http://localhost:8000"
+API = os.getenv("RUNLENS_API", "http://localhost:8000")
 
 
 # ── helpers ────────────────────────────────────────────────────────────────
