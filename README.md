@@ -4,7 +4,7 @@
 
 RunLens helps you understand why an agent run failed or became expensive — and what to fix. It captures runs step by step, shows cost per step, and lets you compare two runs side by side to see exactly what changed.
 
-👉 **[Live demo](https://splendorous-banoffee-035094.netlify.app)**
+👉 **[Live demo](https://runlens-api.onrender.com)**
 
 ---
 
