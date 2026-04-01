@@ -7,13 +7,13 @@ Two versions of the same agent. Same task. Very different behavior.
 Run this script, then go to runlens-api.onrender.com to see the comparison.
 
 Requirements:
-    pip install runlens-sdk requests
+    pip install runlens-sdk
 """
 
 import os
-import sys
 import time
-import requests
+
+from runlens import start_run as sdk_start_run, record_step, end_run as sdk_end_run
 
 API = os.getenv("RUNLENS_API", "http://localhost:8000")
 
@@ -21,25 +21,16 @@ API = os.getenv("RUNLENS_API", "http://localhost:8000")
 # ── helpers ────────────────────────────────────────────────────────────────
 
 def start_run(task, context):
-    r = requests.post(f"{API}/runs", json={"task_name": task, "context": context, "status": "running"})
-    r.raise_for_status()
-    return r.json()["id"]
+    handle = sdk_start_run(task=task, context=context, api_url=API)
+    return handle.id
 
 def step(run_id, name, step_type, inp, out, cost, tokens):
-    requests.post(f"{API}/runs/{run_id}/steps", json={
-        "name": name, "step_type": step_type,
-        "input": inp, "output": out,
-        "cost": cost, "tokens": tokens,
-    })
+    record_step(run_id=run_id, name=name, step_type=step_type,
+                input=inp, output=out, cost=cost, tokens=tokens)
     time.sleep(0.05)  # makes the timeline feel real
 
 def end_run(run_id, cost, tokens, duration_ms):
-    requests.patch(f"{API}/runs/{run_id}", json={
-        "status": "completed",
-        "total_cost": cost,
-        "total_tokens": tokens,
-        "duration_ms": duration_ms,
-    })
+    sdk_end_run(run_id)
 
 
 # ── scenario ───────────────────────────────────────────────────────────────
