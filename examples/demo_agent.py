@@ -15,7 +15,7 @@ import time
 
 from runlens import start_run as sdk_start_run, record_step, end_run as sdk_end_run
 
-API = os.getenv("RUNLENS_API", "http://localhost:8000")
+API = os.getenv("RUNLENS_API", "https://runlens-api.onrender.com")
 
 
 # ── helpers ────────────────────────────────────────────────────────────────
