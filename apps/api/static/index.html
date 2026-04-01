@@ -201,7 +201,6 @@
   </div>
 
   <div class="toolbar">
-    <h2 id="tab-title">Demo</h2>
     <button id="compare-btn" onclick="goCompare()">Compare selected</button>
   </div>
 
@@ -215,40 +214,60 @@
   let selected = [];
   let activeTab = 'demo';
 
+  const DEMO_RUNS = [
+    {
+      id: 'demo-run-a',
+      task_name: 'customer support: refund request',
+      label: 'Run A — gpt-4o · prompt v1 · original',
+      status: 'completed',
+      total_cost: 0.015,
+      total_tokens: 1190,
+      duration_ms: 4200,
+      steps: 8,
+      context: { model: 'gpt-4o', prompt_version: 'v1', temperature: 0.8, agent_version: '1.0.0' },
+    },
+    {
+      id: 'demo-run-b',
+      task_name: 'customer support: refund request',
+      label: 'Run B — gpt-4o-mini · prompt v2 · optimized',
+      status: 'completed',
+      total_cost: 0.003,
+      total_tokens: 390,
+      duration_ms: 1100,
+      steps: 4,
+      context: { model: 'gpt-4o-mini', prompt_version: 'v2', temperature: 0.3, agent_version: '1.1.0' },
+    },
+  ];
+
   function switchTab(tab) {
     activeTab = tab;
     selected = [];
     document.getElementById('compare-btn').style.display = 'none';
     document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
     document.querySelector(`.tab[onclick="switchTab('${tab}')"]`).classList.add('active');
-    document.getElementById('tab-title').textContent = tab === 'demo' ? 'Demo' : 'Your Runs';
     load();
   }
 
   async function load() {
     const el = document.getElementById('content');
     el.innerHTML = '<div class="empty">Loading…</div>';
-    const isDemo = activeTab === 'demo';
+
+    if (activeTab === 'demo') {
+      renderTable(el, DEMO_RUNS, true);
+      return;
+    }
+
     try {
-      const res = await fetch(`${API}/runs${isDemo ? '?demo=true' : ''}`);
+      const res = await fetch(`${API}/runs`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const runs = await res.json();
 
       if (runs.length === 0) {
-        if (isDemo) {
-          el.innerHTML = `
-            <div class="empty-state">
-              <h3>No demo runs yet</h3>
-              <p>Run the demo script to pre-load example runs.</p>
-              <pre><span class="comment"># from the repo root</span>
-python examples/demo_agent.py</pre>
-            </div>`;
-        } else {
-          el.innerHTML = `
-            <div class="empty-state">
-              <h3>No runs yet</h3>
-              <p>Instrument your agent with 3 lines and your first run will appear here.</p>
-              <pre><span class="comment"># install</span>
+        el.innerHTML = `
+          <div class="empty-state">
+            <h3>No runs yet</h3>
+            <p>Instrument your agent with 3 lines and your first run will appear here.</p>
+            <pre><span class="comment"># install</span>
 pip install runlens-sdk
 
 <span class="comment"># instrument</span>
@@ -257,53 +276,66 @@ pip install runlens-sdk
 run = start_run(task=<span class="keyword">"my_agent"</span>, api_url=<span class="keyword">"${API}"</span>)
 record_step(run_id=run.id, step_type=<span class="keyword">"llm_call"</span>, input={}, output={}, model=<span class="keyword">"gpt-4o"</span>, tokens=100)
 end_run(run.id)</pre>
-              <a class="gh-link" href="https://github.com/mda-diaz/runlens" target="_blank">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
-                View on GitHub
-              </a>
-            </div>`;
-        }
+            <a class="gh-link" href="https://github.com/mda-diaz/runlens" target="_blank">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+              View on GitHub
+            </a>
+          </div>`;
         return;
       }
 
-      el.innerHTML = `
-        <table>
-          <thead>
-            <tr>
-              <th></th>
-              <th>Task</th>
-              <th>Status</th>
-              <th>Cost</th>
-              <th>Tokens</th>
-              <th>Duration</th>
-              <th>Date</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody id="tbody"></tbody>
-        </table>
-      `;
+      renderTable(el, runs, false);
+    } catch (e) {
+      el.innerHTML = `<div class="error-msg">Could not connect to API at ${API}. Make sure the backend is running.<br><small>${e.message}</small></div>`;
+    }
+  }
 
-      const tbody = document.getElementById('tbody');
-      runs.forEach(run => {
-        const tr = document.createElement('tr');
-        tr.dataset.id = run.id;
-        const displayName = isDemo ? esc(run.task_name.replace(/^demo:\s*/, '')) : esc(run.task_name);
-        tr.innerHTML = `
-          <td><input type="checkbox" data-id="${run.id}" onchange="toggleSelect(this)" /></td>
-          <td class="task-name"><a href="run.html?id=${run.id}">${displayName}</a></td>
+  function renderTable(el, runs, isDemo) {
+    el.innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            ${isDemo ? '' : '<th></th>'}
+            <th>Task</th>
+            <th>Status</th>
+            <th>Cost</th>
+            <th>Tokens</th>
+            <th>Steps</th>
+            <th>Duration</th>
+            ${isDemo ? '' : '<th>Date</th><th></th>'}
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    `;
+    const tbody = document.getElementById('tbody');
+    runs.forEach(run => {
+      const tr = document.createElement('tr');
+      tr.dataset.id = run.id;
+      const name = isDemo ? esc(run.label) : esc(run.task_name);
+      const steps = isDemo ? run.steps : '—';
+      tr.innerHTML = isDemo
+        ? `
+          <td class="task-name">${name}</td>
           <td><span class="badge badge-${run.status}">${run.status}</span></td>
           <td class="cost mono">$${run.total_cost.toFixed(4)}</td>
           <td class="mono">${run.total_tokens.toLocaleString()}</td>
+          <td class="mono">${steps}</td>
+          <td class="mono">${fmtDuration(run.duration_ms)}</td>
+        `
+        : `
+          <td><input type="checkbox" data-id="${run.id}" onchange="toggleSelect(this)" /></td>
+          <td class="task-name"><a href="run.html?id=${run.id}">${name}</a></td>
+          <td><span class="badge badge-${run.status}">${run.status}</span></td>
+          <td class="cost mono">$${run.total_cost.toFixed(4)}</td>
+          <td class="mono">${run.total_tokens.toLocaleString()}</td>
+          <td class="mono">—</td>
           <td class="mono">${fmtDuration(run.duration_ms)}</td>
           <td class="mono">${fmtDate(run.created_at)}</td>
           <td><a class="btn-view" href="run.html?id=${run.id}">View</a></td>
         `;
-        tbody.appendChild(tr);
-      });
-    } catch (e) {
-      el.innerHTML = `<div class="error-msg">Could not connect to API at ${API}. Make sure the backend is running.<br><small>${e.message}</small></div>`;
-    }
+      tbody.appendChild(tr);
+    });
   }
 
   function toggleSelect(cb) {
