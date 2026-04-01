@@ -292,6 +292,7 @@ end_run(run.id)</pre>
 
   function renderTable(el, runs, isDemo) {
     el.innerHTML = `
+      ${isDemo ? `<div style="margin-bottom:16px"><a href="compare.html?run_a=demo-run-a&run_b=demo-run-b" style="display:inline-flex;align-items:center;gap:6px;padding:8px 18px;background:#111;color:#fff;border-radius:6px;font-size:13px;font-weight:500;text-decoration:none">Compare Run A vs Run B →</a></div>` : ''}
       <table>
         <thead>
           <tr>
