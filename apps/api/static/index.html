@@ -196,12 +196,12 @@
 
 <main>
   <div class="tabs">
-    <div class="tab active" onclick="switchTab('your-runs')">Your Runs</div>
-    <div class="tab" onclick="switchTab('demo')">Demo</div>
+    <div class="tab active" onclick="switchTab('demo')">Demo</div>
+    <div class="tab" onclick="switchTab('your-runs')">Your Runs</div>
   </div>
 
   <div class="toolbar">
-    <h2 id="tab-title">Your Runs</h2>
+    <h2 id="tab-title">Demo</h2>
     <button id="compare-btn" onclick="goCompare()">Compare selected</button>
   </div>
 
@@ -213,7 +213,7 @@
 <script>
   const API = window.location.origin;
   let selected = [];
-  let activeTab = 'your-runs';
+  let activeTab = 'demo';
 
   function switchTab(tab) {
     activeTab = tab;
