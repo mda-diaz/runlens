@@ -85,8 +85,13 @@ def create_run(body: RunCreate, session: Session = Depends(get_session)):
 # ---------------------------------------------------------------------------
 
 @router.get("/runs")
-def list_runs(session: Session = Depends(get_session)):
-    runs = session.exec(select(Run).order_by(Run.created_at.desc())).all()
+def list_runs(demo: bool = False, session: Session = Depends(get_session)):
+    q = select(Run).order_by(Run.created_at.desc())
+    if demo:
+        q = q.where(Run.task_name.startswith("demo:"))
+    else:
+        q = q.where(~Run.task_name.startswith("demo:"))
+    runs = session.exec(q).all()
     return [_serialize_run(r) for r in runs]
 
 

@@ -35,7 +35,7 @@ def end_run(run_id, cost, tokens, duration_ms):
 
 # ── scenario ───────────────────────────────────────────────────────────────
 
-TASK = "customer support: refund request"
+TASK = "demo: customer support: refund request"
 QUESTION = "Hi, I ordered the wrong size. Can I get a refund?"
 
 print("\n🎬  RunLens Demo — The Case of the Expensive Agent")
